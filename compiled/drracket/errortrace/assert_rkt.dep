@@ -1,0 +1,1 @@
+("8.14" ta6osx ("77f668bb4d54ff037bde35344356075852275b51" . "ba28278a84b1a0d2836a80d89f5ff1bc3cc5292e") #"/Users/dvanhorn/git/langs/loot/types.rkt" (collects #"a86" #"ast.rkt") (collects #"drracket" #"private" #"drracket-errortrace-key.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))
