@@ -3,7 +3,7 @@
 (require "ast.rkt")
 (require "types.rkt")
 (require "assert.rkt")
-(require "dinterp.rkt")
+(require "finterp.rkt")
 (require a86/ast)
 
 (define rax 'rax)

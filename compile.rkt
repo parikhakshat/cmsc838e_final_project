@@ -15,7 +15,7 @@
 (require "types.rkt")
 (require "lambdas.rkt")
 (require "fv.rkt")
-(require "dinterp.rkt")
+(require "finterp.rkt")
 (require a86/ast)
 
 (define rax 'rax)
