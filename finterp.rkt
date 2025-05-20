@@ -6,6 +6,8 @@
          (struct-out closure)
          err?
          type-integer?
+         condition-always-false?
+         condition-always-true?
          type-proc?
          known-lambda?)
 (require "ast.rkt"
@@ -643,6 +645,19 @@
      (match (lookup r x)
        ['err (list (set 'err) (hasheq e (set (list 'err s))))]
        [v (list (set (list v s)) (hasheq e (set (list v s))))])]))
+
+
+(define (condition-always-true? answers)
+  (and (not (set-empty? answers))
+       (for/and ([a (in-set answers)])
+         (match a
+           [(list v _) (truish? v)]))))
+
+(define (condition-always-false? answers)
+  (and (not (set-empty? answers))
+       (for/and ([a (in-set answers)])
+         (match a
+           [(list v _) (not (truish? v))]))))
 
 
 (define (zip xs ys)

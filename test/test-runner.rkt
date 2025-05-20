@@ -374,5 +374,6 @@
                                   (begin (write-byte x)
                                          (write-byte 99))))
                          98))
-                  (cons (void) "abc"))))
+                  (cons (void) "abc")))
+)
 

@@ -239,16 +239,33 @@
 
 ;; Expr Expr Expr CEnv Boolean Table -> Asm
 (define (compile-if e1 e2 e3 c t? t)
-  (let ((l1 (gensym 'if))
-        (l2 (gensym 'if)))
-    (seq (compile-e e1 c #f t)
-         (Cmp rax (value->bits #f))
-         (Je l1)
-         (compile-e e2 c t? t)
-         (Jmp l2)
-         (Label l1)
-         (compile-e e3 c t? t)
-         (Label l2))))
+  (define e1-results (hash-ref t e1 (set)))
+  (define takes-true (condition-always-true? e1-results))
+  (define takes-false (condition-always-false? e1-results))
+  
+  (cond
+    [takes-true
+     ;; Condition always evaluates to true, only compile the then branch
+     (%% "Dead code elimination: eliminated else branch")
+     (seq (compile-e e1 c #f t) ; Still evaluate condition for side effects
+          (compile-e e2 c t? t))]
+    [takes-false
+     ;; Condition always evaluates to false, only compile the else branch
+     (%% "Dead code elimination: eliminated then branch")
+     (seq (compile-e e1 c #f t) ; Still evaluate condition for side effects
+          (compile-e e3 c t? t))]
+    [else
+     ;; Condition can be both true and false, compile both branches
+     (let ((l1 (gensym 'if))
+           (l2 (gensym 'if)))
+       (seq (compile-e e1 c #f t)
+            (Cmp rax (value->bits #f))
+            (Je l1)
+            (compile-e e2 c t? t)
+            (Jmp l2)
+            (Label l1)
+            (compile-e e3 c t? t)
+            (Label l2)))]))
 
 ;; Expr Expr CEnv Boolean Table -> Asm
 (define (compile-begin e1 e2 c t? t)
