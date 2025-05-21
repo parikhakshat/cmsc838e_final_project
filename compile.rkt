@@ -117,9 +117,15 @@
          [(closure l0 _ _ _) (eq? l l0)]
          [_ #f]))]))
 
-       
-    
 
+(define (concrete-constant? v)
+  (or (integer? v) (boolean? v) (char? v) (void? v) (eof-object? v) (null? v)))
+       
+(define (concrete-value t e)
+  (define results (hash-ref t e (set)))
+  (match (set->list results)
+    [(list (list v _)) (and (concrete-constant? v) v)]
+    [_ #f]))
     
 
 
@@ -160,25 +166,29 @@
 ;; type CEnv = (Listof [Maybe Id])
 ;; Expr CEnv Boolean Table -> Asm
 (define (compile-e e c t? t)
-  (match e
-    [(Lit d) (compile-value d)]
-    [(Eof) (compile-value eof)]
-    [(Var x) (compile-variable x c)]
-    [(Prim0 p) (compile-prim0 p)]
-    [(Prim1 p e) (compile-prim1 p e c t)]
-    [(Prim2 p e1 e2) (compile-prim2 p e1 e2 c t)]
-    [(Prim3 p e1 e2 e3) (compile-prim3 p e1 e2 e3 c t)]
-    [(If e1 e2 e3)
-     (compile-if e1 e2 e3 c t? t)]
-    [(Begin e1 e2)
-     (compile-begin e1 e2 c t? t)]
-    [(Let x e1 e2)
-     (compile-let x e1 e2 c t? t)]
-    [(App e es)
-     (compile-app e es c t? t)]
-    [(Lam f xs e)
-     (compile-lam f xs e c)]
-    [(Match e ps es) (compile-match e ps es c t?)]))
+  (match (concrete-value t e)
+    [#f (match e
+      [(Lit d) (compile-value d)]
+      [(Eof) (compile-value eof)]
+      [(Var x) (compile-variable x c)]
+      [(Prim0 p) (compile-prim0 p)]
+      [(Prim1 p e) (compile-prim1 p e c t)]
+      [(Prim2 p e1 e2) (compile-prim2 p e1 e2 c t)]
+      [(Prim3 p e1 e2 e3) (compile-prim3 p e1 e2 e3 c t)]
+      [(If e1 e2 e3)
+      (compile-if e1 e2 e3 c t? t)]
+      [(Begin e1 e2)
+      (compile-begin e1 e2 c t? t)]
+      [(Let x e1 e2)
+      (compile-let x e1 e2 c t? t)]
+      [(App e es)
+      (compile-app e es c t? t)]
+      [(Lam f xs e)
+      (compile-lam f xs e c)]
+      [(Match e ps es) (compile-match e ps es c t?)])]
+    [v
+      (seq (%% "Constant folding: replaced expression")
+      (compile-value v))]))
 
 ;; Value -> Asm
 (define (compile-value v)
@@ -246,13 +256,13 @@
   (cond
     [takes-true
      ;; Condition always evaluates to true, only compile the then branch
-     (%% "Dead code elimination: eliminated else branch")
-     (seq (compile-e e1 c #f t) ; Still evaluate condition for side effects
+     (seq (%% "Dead code elimination: eliminated else branch")
+          (compile-e e1 c #f t) ; Still evaluate condition for side effects
           (compile-e e2 c t? t))]
     [takes-false
      ;; Condition always evaluates to false, only compile the else branch
-     (%% "Dead code elimination: eliminated then branch")
-     (seq (compile-e e1 c #f t) ; Still evaluate condition for side effects
+     (seq (%% "Dead code elimination: eliminated then branch")
+          (compile-e e1 c #f t) ; Still evaluate condition for side effects
           (compile-e e3 c t? t))]
     [else
      ;; Condition can be both true and false, compile both branches

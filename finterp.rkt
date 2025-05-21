@@ -304,9 +304,9 @@
 (define (interp-prim1 e op v s)
   (match (list op v)
     [(list 'add1 (Int))                   (set (list (Int) s))]
-    [(list 'add1 (? integer?))            (if (current-abstract?) (set (list (Int) s)) (set (list (add1 v) s)))]
+    [(list 'add1 (? integer?))            (set (list (add1 v) s))]
     [(list 'sub1 (Int))                   (set (list (Int) s))]
-    [(list 'sub1 (? integer?))            (if (current-abstract?) (set (list (Int) s)) (set (list (sub1 v) s)))]
+    [(list 'sub1 (? integer?))            (set (list (sub1 v) s))]
     [(list 'zero? (Int))                  (set (list #t s) (list #f s))]
     [(list 'zero? (? integer?))           (set (list (zero? v) s))]
     [(list 'empty? v)                     (set (list (empty? v) s))]
@@ -367,12 +367,10 @@
 (define (interp-prim2 e op v1 v2 s)
   (match (list op v1 v2)
     [(list '+ (? integer?) (? integer?))
-     (if (current-abstract?)
-         (set (list (Int) s))
-         (set (list (+ v1 v2) s)))]
+         (set (list (+ v1 v2) s))]
     
     [(list '+ (or (? integer?) (Int)) (or (? integer?) (Int))) (set (list (Int) s))]
-    [(list '- (? integer?) (? integer?)) (if (current-abstract?) (set (list (Int) s)) (set (list (- v1 v2) s)))]
+    [(list '- (? integer?) (? integer?)) (set (list (- v1 v2) s))]
     [(list '- (or (? integer?) (Int)) (or (? integer?) (Int))) (set (list (Int) s))]
     [(list '< (? integer?) (? integer?)) (set (list (< v1 v2) s))]
     [(list '< (or (? integer?) (Int)) (or (? integer?) (Int))) (set (list #t s) (list #f))]
