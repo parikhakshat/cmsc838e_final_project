@@ -126,7 +126,22 @@
   (match (set->list results)
     [(list (list v _)) (and (concrete-constant? v) v)]
     [_ #f]))
-    
+
+(define (has-side-effects? e)
+  (match e
+    [(Prim0 'read-byte) #t]
+    [(Prim0 'peek-byte) #t]
+    [(Prim1 'write-byte _) #t]
+    [(Prim3 'vector-set! _ _ _) #t]
+    [(Prim1 _ e1) (has-side-effects? e1)]
+    [(Prim2 _ e1 e2) (or (has-side-effects? e1) (has-side-effects? e2))]
+    [(Prim3 _ e1 e2 e3) (or (has-side-effects? e1) (has-side-effects? e2) (has-side-effects? e3))]
+    [(If e1 e2 e3) (or (has-side-effects? e1) (has-side-effects? e2) (has-side-effects? e3))]
+    [(Begin e1 e2) (or (has-side-effects? e1) (has-side-effects? e2))]
+    [(Let _ e1 e2) (or (has-side-effects? e1) (has-side-effects? e2))]
+    [(App e1 es) #t]
+    [(Match e1 _ es) (or (has-side-effects? e1) (ormap has-side-effects? es))]
+    [_ #f]))
 
 
 ;; Lam Table -> Asm
@@ -166,7 +181,7 @@
 ;; type CEnv = (Listof [Maybe Id])
 ;; Expr CEnv Boolean Table -> Asm
 (define (compile-e e c t? t)
-  (match (concrete-value t e)
+  (match (if (has-side-effects? e) #f (concrete-value t e))
     [#f (match e
       [(Lit d) (compile-value d)]
       [(Eof) (compile-value eof)]
